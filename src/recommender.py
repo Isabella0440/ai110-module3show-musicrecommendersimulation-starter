@@ -1,5 +1,6 @@
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
+import csv
+from typing import List, Dict, Tuple
+from dataclasses import asdict, dataclass
 
 @dataclass
 class Song:
@@ -30,44 +31,74 @@ class UserProfile:
     likes_acoustic: bool
 
 class Recommender:
-    """
-    OOP implementation of the recommendation logic.
-    Required by tests/test_recommender.py
-    """
+    """Recommend Song objects using the same scoring rules as the CLI."""
+
     def __init__(self, songs: List[Song]):
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        # TODO: Implement recommendation logic
-        return self.songs[:k]
+        """Return the highest-scoring Song objects."""
+        prefs = self._preferences(user)
+        ranked = sorted(
+            self.songs, key=lambda song: score_song(prefs, asdict(song))[0], reverse=True
+        )
+        return ranked[:max(0, k)]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        # TODO: Implement explanation logic
-        return "Explanation placeholder"
+        """Explain the points a song earned for this user."""
+        _, reasons = score_song(self._preferences(user), asdict(song))
+        return "; ".join(reasons)
+
+    @staticmethod
+    def _preferences(user: UserProfile) -> Dict:
+        return {
+            "genre": user.favorite_genre,
+            "mood": user.favorite_mood,
+            "energy": user.target_energy,
+        }
+
 
 def load_songs(csv_path: str) -> List[Dict]:
-    """
-    Loads songs from a CSV file.
-    Required by src/main.py
-    """
-    # TODO: Implement CSV loading logic
-    print(f"Loading songs from {csv_path}...")
-    return []
+    """Read the CSV catalog and convert numeric columns to Python numbers."""
+    with open(csv_path, newline="", encoding="utf-8") as catalog:
+        songs = list(csv.DictReader(catalog))
+    for song in songs:
+        song["id"] = int(song["id"])
+        for field in ("energy", "tempo_bpm", "valence", "danceability", "acousticness"):
+            song[field] = float(song[field])
+    return songs
 
-def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """
-    Scores a single song against user preferences.
-    Required by recommend_songs() and src/main.py
-    """
-    # TODO: Implement scoring logic using your Algorithm Recipe from Phase 2.
-    # Expected return format: (score, reasons)
-    return []
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
-    """
-    # TODO: Implement scoring and ranking logic
-    # Expected return format: (song_dict, score, explanation)
-    return []
+def score_song(
+    user_prefs: Dict, song: Dict, *, genre_weight: float = 2.0, energy_weight: float = 1.0
+) -> Tuple[float, List[str]]:
+    """Return a weighted relevance score and its point-by-point explanation."""
+    score = 0.0
+    reasons = []
+    for field, weight in (("genre", genre_weight), ("mood", 1.0)):
+        if song[field].strip().casefold() == user_prefs[field].strip().casefold():
+            score += weight
+            reasons.append(f"{field} match (+{weight:.2f})")
+
+    gap = abs(song["energy"] - user_prefs["energy"])
+    energy_points = energy_weight * max(0.0, 1.0 - gap)
+    reasons.append(f"energy gap {gap:.2f} (+{energy_points:.2f})")
+    return score + energy_points, reasons
+
+
+def recommend_songs(
+    user_prefs: Dict,
+    songs: List[Dict],
+    k: int = 5,
+    *,
+    genre_weight: float = 2.0,
+    energy_weight: float = 1.0,
+) -> List[Tuple[Dict, float, str]]:
+    """Score each song and return up to k results with explanations."""
+    results = []
+    for song in songs:
+        score, reasons = score_song(
+            user_prefs, song, genre_weight=genre_weight, energy_weight=energy_weight
+        )
+        results.append((song, score, "; ".join(reasons)))
+    return sorted(results, key=lambda result: result[1], reverse=True)[:max(0, k)]

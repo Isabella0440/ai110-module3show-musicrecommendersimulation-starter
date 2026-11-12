@@ -9,3 +9,11 @@ id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
 9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
 10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+11,Paper Satellites,Luna Static,pop,sad,0.34,76,0.24,0.48,0.63
+12,Glass Avalanche,Iron Vellum,metal,intense,0.97,169,0.32,0.44,0.03
+13,Hearth and Harbor,June Alder,folk,nostalgic,0.31,81,0.51,0.45,0.94
+14,Market at Dawn,Cobre Luna,salsa,joyful,0.88,174,0.91,0.87,0.39
+15,Blue Afterimage,Mira Voltage,drum and bass,sad,0.91,172,0.29,0.76,0.08
+16,Soft Geometry,Room Circuit,downtempo,chill,0.39,84,0.54,0.61,0.46
+17,Velvet Steps,Asha Vale,soul,romantic,0.53,95,0.72,0.68,0.55
+18,Thunder in Bloom,Slate Gardens,rock,intense,0.85,144,0.46,0.57,0.12
